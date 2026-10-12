@@ -35,7 +35,7 @@ Engineering and Technology, Coimbatore, 1–3 September 2026.
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-pytest                                          # 18 tests, ~1 min
+pytest                                          # 18 tests, ~10 s
 
 python -m experiments.run_static_comparison     # finance sector, ~5 min, trains the app model
 python -m experiments.run_ablation              # multi-market ablation, see note below
