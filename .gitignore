@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Downloaded market data and derived datasets (re-created by the pipeline)
+data/.cache/
+data/processed/
+
+# LaTeX build output
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local run logs
+logs/

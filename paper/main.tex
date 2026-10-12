@@ -1,0 +1,168 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+
+\begin{document}
+
+\title{Do Graph Neural Networks Predict Financial Shock Propagation?\\
+A Leakage-Free Evaluation of GATv2 and a Temporal Multi-Market Extension}
+
+% TODO: replace with your name and affiliation
+\author{\IEEEauthorblockN{Author Name}
+\IEEEauthorblockA{Affiliation \\ email}}
+
+\maketitle
+
+\begin{abstract}
+We study whether graph neural networks (GNNs) can predict which stocks make a large move
+shortly after another stock experiences an abnormal return. We evaluate two models under a
+protocol designed to avoid look-ahead bias: chronological train/validation/test splits with
+purge gaps, trailing-only features, dynamic-correlation parameters estimated on training
+data only, five random seeds, and non-graph baselines. The first model is a two-layer GATv2
+over ten US banks with a one-day horizon. An earlier version of this project reported
+0.914 ROC-AUC for it; that figure came from selecting the best of 1,080 configurations on a
+12-sample validation set. Under the corrected protocol it reaches ABSTRACT_FIN on held-out
+events, which is close to chance. The second model, CascadeNet, combines per-snapshot GATv2
+layers with transformer attention over twelve weekly graph snapshots of 194 stocks in four
+markets, using DCC-GARCH correlations as edge weights. ABSTRACT_ABL We conclude that, for
+this label definition, the predictive signal is dominated by each stock's own volatility,
+and that the graph and temporal components do not add measurable value.
+\end{abstract}
+
+\section{Introduction}
+Shocks to one firm can spread to others through common exposures, funding links and
+correlated trading. Graph neural networks are a natural fit: stocks are nodes,
+relationships are edges, and message passing could model how a shock travels. Financial
+prediction is also prone to evaluation leakage: future information enters the features,
+events are split randomly in time, or a model is chosen on the same data it is scored on.
+These problems can make weak models look strong.
+
+This report makes three contributions. (i) A leakage-free event-based evaluation pipeline
+for shock-propagation prediction, with tests that check for look-ahead. (ii) A
+re-evaluation of a finance-sector GATv2 whose originally reported performance did not
+replicate. (iii) A four-step ablation of a temporal multi-market GNN (CascadeNet) against
+non-graph baselines.
+
+\section{Problem Setup}
+Let $P_i(t)$ be the USD close of stock $i$ on trading day $t$ and $r_i(t)$ its daily return.
+A \emph{shock} at stock $s$ on day $d$ is a return with $|r_s(d)|/\hat\sigma_s(d-1) > 3$,
+where $\hat\sigma_s(d-1)$ is the standard deviation over the trailing 60 days (CascadeNet
+additionally requires $|r_s(d)| > 3\%$). At most three shocks are kept per day. For each
+event and each other stock $i$, the label is
+\begin{equation}
+y_i = \mathbb{1}\left[\,\left|P_i(d+h)/P_i(d) - 1\right| > 3\%\,\right].
+\end{equation}
+Events are split by date into 60\% train, 20\% validation and 20\% test, with an $h$-day gap
+between splits. The shock source is excluded from scoring.
+
+\section{Data}
+Daily prices come from Yahoo Finance for 2021-10-01 to 2026-09-29. \emph{Finance sector:}
+ten large US banks; horizon $h=1$; 88/38/30 train/validation/test events. \emph{CascadeNet:}
+the 50 largest S\&P~500 stocks, NIFTY~50, and the 50 largest FTSE~100 and Nikkei~225 stocks.
+After dropping tickers with missing data, 194 remain. Non-US closes are converted to USD and
+aligned on the NYSE calendar. Tokyo, Mumbai and London close before New York on the same
+date, so this alignment introduces no look-ahead. The horizon is $h=5$, giving
+1162/378/392 events; the test period runs from 2025-11-11 to 2026-09-22.
+
+\section{Models}
+\subsection{Graphs and features}
+\emph{Finance sector:} documented peer links plus edges from the shock source to every bank.
+Each node has 8 features: trailing return statistics, volatility, price and volume ratios, a
+shock-source flag and a peer-link flag. \emph{CascadeNet:} each node keeps its 10 neighbours
+with the largest absolute correlation. Correlations are either Pearson over a trailing
+120-day window, or DCC(1,1)-GARCH(1,1)~\cite{engle2002} estimated on training days only and
+filtered forward. With 194 assets, the full DCC likelihood drove the news parameter to
+$a\approx 0$ (effectively constant correlation). We therefore use the pairwise composite
+likelihood~\cite{pakel2021}, which gives $a=0.018$, $b=0.928$. Each node has 14 features,
+z-scored with training-period statistics.
+
+\subsection{Architectures}
+\emph{StaticGATv2}: two GATv2~\cite{brody2022} layers (2 heads, then 1 head; hidden size 32)
+with edge weights in the attention score. \emph{TemporalGATv2}: the same spatial block,
+shared across $T=12$ snapshots spaced 5 trading days apart. A pre-LayerNorm transformer
+block~\cite{vaswani2017} with sinusoidal positions runs over each node's 12 embeddings; the
+last position feeds an MLP head. \emph{Baselines}: GAT, GCN~\cite{kipf2017},
+GraphSAGE~\cite{hamilton2017}, a per-node MLP, logistic regression, and a heuristic that
+scores each stock by its trailing 20-day volatility.
+
+\subsection{Training}
+We use weighted binary cross-entropy (positives weighted by neg/pos) and Adam with gradient
+clipping. Early stopping uses validation ROC-AUC. The F1 threshold is chosen on validation
+and applied unchanged to test. Every trained model runs with 5 seeds.
+
+\section{Results}
+We report test ROC-AUC, PR-AUC (a random scorer achieves the positive base rate) and F1,
+as mean $\pm$ standard deviation over seeds.
+
+\begin{table}[t]
+\centering
+\caption{Finance sector, test set (270 stock-events, base rate 0.093).}
+\label{tab:fin}
+\begin{tabular}{lccc}
+\toprule
+Model & ROC-AUC & PR-AUC & F1 \\
+\midrule
+Volatility heuristic & 0.516 & 0.102 & 0.000 \\
+Logistic regression & 0.385 & 0.086 & 0.065 \\
+MLP & 0.359 $\pm$ 0.026 & 0.077 $\pm$ 0.007 & 0.053 $\pm$ 0.048 \\
+GATv2 & 0.553 $\pm$ 0.022 & 0.114 $\pm$ 0.011 & 0.049 $\pm$ 0.052 \\
+GAT & 0.529 $\pm$ 0.023 & 0.108 $\pm$ 0.008 & 0.048 $\pm$ 0.047 \\
+GCN & 0.464 $\pm$ 0.032 & 0.089 $\pm$ 0.008 & 0.043 $\pm$ 0.055 \\
+GraphSAGE & 0.492 $\pm$ 0.071 & 0.092 $\pm$ 0.014 & 0.021 $\pm$ 0.028 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{CascadeNet ablation, test set (S\&P 500 targets, base rate ABL_BASE).}
+\label{tab:abl}
+\begin{tabular}{lccc}
+\toprule
+Model & ROC-AUC & PR-AUC & F1 \\
+\midrule
+ABLATION_ROWS
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Finance sector} (Table~\ref{tab:fin}). GATv2 ranks first, but every model is close
+to chance. With only 25 positive labels in the test set, these differences are not
+reliable. The non-graph models score below 0.5, which suggests that the relationships
+learned from 2022--2024 reversed in the test period.
+
+\textbf{CascadeNet ablation} (Table~\ref{tab:abl}). ABLATION_DISCUSSION
+
+\section{Lessons from the Original Evaluation}
+The originally reported 0.914 ROC-AUC had four causes. (1) It was the maximum over 1,080
+configurations, each scored on 12 validation samples. (2) Events were ordered by ticker
+before a ``temporal'' split, so training and validation overlapped in time. (3) Shock
+z-scores used full-sample statistics. (4) The reported number was also the model-selection
+number. Retraining the same configuration gave 0.69 and 0.76 at the time. Under the protocol
+above it gives 0.553.
+
+\section{Limitations}
+The test sets are small and come from a single market regime. The label (absolute move
+above 3\%) is largely explained by each stock's own volatility; a label based on abnormal
+returns would isolate propagation better. The universe consists of current large caps, so
+it has survivorship bias. CascadeNet hyperparameters were not tuned. Attention weights are
+diagnostics, not causal attributions.
+
+\section{Conclusion}
+Under a leakage-free protocol, neither a finance-sector GATv2 nor a temporal multi-market
+GNN outperforms a trailing-volatility heuristic at predicting which stocks move after a
+shock. The evaluation pipeline, including its look-ahead tests, is the more durable
+contribution.
+
+\begin{thebibliography}{9}
+\bibitem{brody2022} S.~Brody, U.~Alon, and E.~Yahav, ``How attentive are graph attention networks?'' in \emph{ICLR}, 2022.
+\bibitem{engle2002} R.~Engle, ``Dynamic conditional correlation: A simple class of multivariate generalized autoregressive conditional heteroskedasticity models,'' \emph{J. Business \& Economic Statistics}, vol.~20, no.~3, pp.~339--350, 2002.
+\bibitem{pakel2021} C.~Pakel, N.~Shephard, K.~Sheppard, and R.~Engle, ``Fitting vast dimensional time-varying covariance models,'' \emph{J. Business \& Economic Statistics}, vol.~39, no.~3, pp.~652--668, 2021.
+\bibitem{vaswani2017} A.~Vaswani \emph{et al.}, ``Attention is all you need,'' in \emph{NeurIPS}, 2017.
+\bibitem{kipf2017} T.~Kipf and M.~Welling, ``Semi-supervised classification with graph convolutional networks,'' in \emph{ICLR}, 2017.
+\bibitem{hamilton2017} W.~Hamilton, R.~Ying, and J.~Leskovec, ``Inductive representation learning on large graphs,'' in \emph{NeurIPS}, 2017.
+\end{thebibliography}
+
+\end{document}
