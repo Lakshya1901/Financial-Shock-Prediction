@@ -18,7 +18,7 @@ This is node-level binary classification on a stock graph. The shock source is m
 with a node feature and excluded from scoring.
 
 A **shock** is a daily return more than 3 standard deviations from zero, measured against the
-stock's *trailing* 60-day volatility (only past data). The CascadeNet experiment also requires
+stock's *trailing* 60-day volatility (only past data). The multi-market experiment also requires
 |return| > 3%. At most 3 shocks per day are kept (the largest), so market-wide crash days
 don't flood the dataset with near-duplicate samples.
 
@@ -26,7 +26,7 @@ don't flood the dataset with near-duplicate samples.
 
 ## Two experiments
 
-| | Finance sector | CascadeNet ablation |
+| | Finance sector | Multi-market ablation |
 |---|---|---|
 | Universe | 10 US banks | 194 stocks: S&P 500 top 50, NIFTY 50, FTSE top 50, Nikkei top 50 |
 | Data | `data/finance_universe.py` | `data/multi_market.py` → `data/shock_dataset.py` |
@@ -42,7 +42,7 @@ trained GATv2 is the model served by `app.py`.
 
 ---
 
-## Data pipeline (CascadeNet)
+## Data pipeline (multi-market)
 
 ```
 yfinance (2021-10-01 → 2026-09-29, cached in data/.cache/)

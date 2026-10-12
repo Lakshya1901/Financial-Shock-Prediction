@@ -1,5 +1,5 @@
 """
-attention_attribution.py — attention-based interpretability for CascadeNet.
+attention_attribution.py — attention-based interpretability for the multi-market model.
 
     TemporalAttentionAnalyzer  — which past *weeks* did each node attend to?
     EdgeImportanceAnalyzer     — how much GATv2 attention flows along each edge,
@@ -87,7 +87,7 @@ MARKET_INDEX: Dict[str, int] = {m: i for i, m in enumerate(MARKETS)}
 class TemporalAttentionAnalyzer:
     """
     Extracts and summarises the *temporal* attention maps produced by
-    CascadeNet's transformer block.
+    the multi-market model's transformer block.
 
     The transformer assigns each node a (T × T) soft-attention matrix
     ``A[i]``, where ``A[i, q, k]`` is the weight that query position *q*
@@ -449,7 +449,7 @@ class ShockAttributionReport:
         lines: List[str] = []
 
         # ── Header ───────────────────────────────────────────────────
-        lines.append("## CascadeNet Shock Attribution Report")
+        lines.append("## Multi-Market Shock Attribution Report")
         lines.append("")
         lines.append(f"**Shock origin ticker:** `{shock}`  ")
         lines.append(f"**Top-{len(top_k_tickers)} most affected stocks:**")

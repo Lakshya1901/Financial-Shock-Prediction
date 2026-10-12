@@ -24,7 +24,7 @@ data only, five random seeds, and non-graph baselines. The first model is a two-
 over ten US banks with a one-day horizon. An earlier version of this project reported
 0.914 ROC-AUC for it; that figure came from selecting the best of 1,080 configurations on a
 12-sample validation set. Under the corrected protocol it reaches ABSTRACT_FIN on held-out
-events, which is close to chance. The second model, CascadeNet, combines per-snapshot GATv2
+events, which is close to chance. The second model, a multi-market temporal GNN, combines per-snapshot GATv2
 layers with transformer attention over twelve weekly graph snapshots of 194 stocks in four
 markets, using DCC-GARCH correlations as edge weights. ABSTRACT_ABL We conclude that, for
 this label definition, the predictive signal is dominated by each stock's own volatility,
@@ -42,13 +42,13 @@ These problems can make weak models look strong.
 This report makes three contributions. (i) A leakage-free event-based evaluation pipeline
 for shock-propagation prediction, with tests that check for look-ahead. (ii) A
 re-evaluation of a finance-sector GATv2 whose originally reported performance did not
-replicate. (iii) A four-step ablation of a temporal multi-market GNN (CascadeNet) against
+replicate. (iii) A four-step ablation of a temporal multi-market GNN against
 non-graph baselines.
 
 \section{Problem Setup}
 Let $P_i(t)$ be the USD close of stock $i$ on trading day $t$ and $r_i(t)$ its daily return.
 A \emph{shock} at stock $s$ on day $d$ is a return with $|r_s(d)|/\hat\sigma_s(d-1) > 3$,
-where $\hat\sigma_s(d-1)$ is the standard deviation over the trailing 60 days (CascadeNet
+where $\hat\sigma_s(d-1)$ is the standard deviation over the trailing 60 days (the multi-market model
 additionally requires $|r_s(d)| > 3\%$). At most three shocks are kept per day. For each
 event and each other stock $i$, the label is
 \begin{equation}
@@ -59,7 +59,7 @@ between splits. The shock source is excluded from scoring.
 
 \section{Data}
 Daily prices come from Yahoo Finance for 2021-10-01 to 2026-09-29. \emph{Finance sector:}
-ten large US banks; horizon $h=1$; 88/38/30 train/validation/test events. \emph{CascadeNet:}
+ten large US banks; horizon $h=1$; 88/38/30 train/validation/test events. \emph{Multi-market:}
 the 50 largest S\&P~500 stocks, NIFTY~50, and the 50 largest FTSE~100 and Nikkei~225 stocks.
 After dropping tickers with missing data, 194 remain. Non-US closes are converted to USD and
 aligned on the NYSE calendar. Tokyo, Mumbai and London close before New York on the same
@@ -70,7 +70,7 @@ date, so this alignment introduces no look-ahead. The horizon is $h=5$, giving
 \subsection{Graphs and features}
 \emph{Finance sector:} documented peer links plus edges from the shock source to every bank.
 Each node has 8 features: trailing return statistics, volatility, price and volume ratios, a
-shock-source flag and a peer-link flag. \emph{CascadeNet:} each node keeps its 10 neighbours
+shock-source flag and a peer-link flag. \emph{Multi-market:} each node keeps its 10 neighbours
 with the largest absolute correlation. Correlations are either Pearson over a trailing
 120-day window, or DCC(1,1)-GARCH(1,1)~\cite{engle2002} estimated on training days only and
 filtered forward. With 194 assets, the full DCC likelihood drove the news parameter to
@@ -117,7 +117,7 @@ GraphSAGE & 0.492 $\pm$ 0.071 & 0.092 $\pm$ 0.014 & 0.021 $\pm$ 0.028 \\
 
 \begin{table}[t]
 \centering
-\caption{CascadeNet ablation, test set (S\&P 500 targets, base rate ABL_BASE).}
+\caption{Multi-market ablation, test set (S\&P 500 targets, base rate ABL_BASE).}
 \label{tab:abl}
 \begin{tabular}{lccc}
 \toprule
@@ -133,7 +133,7 @@ to chance. With only 25 positive labels in the test set, these differences are n
 reliable. The non-graph models score below 0.5, which suggests that the relationships
 learned from 2022--2024 reversed in the test period.
 
-\textbf{CascadeNet ablation} (Table~\ref{tab:abl}). ABLATION_DISCUSSION
+\textbf{Multi-market ablation} (Table~\ref{tab:abl}). ABLATION_DISCUSSION
 
 \section{Lessons from the Original Evaluation}
 The originally reported 0.914 ROC-AUC had four causes. (1) It was the maximum over 1,080
@@ -147,7 +147,7 @@ above it gives 0.553.
 The test sets are small and come from a single market regime. The label (absolute move
 above 3\%) is largely explained by each stock's own volatility; a label based on abnormal
 returns would isolate propagation better. The universe consists of current large caps, so
-it has survivorship bias. CascadeNet hyperparameters were not tuned. Attention weights are
+it has survivorship bias. Multi-market model hyperparameters were not tuned. Attention weights are
 diagnostics, not causal attributions.
 
 \section{Conclusion}

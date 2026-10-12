@@ -1,1 +1,1 @@
-"""CascadeNet interpretability and causal attribution tools."""
+"""Financial shock prediction interpretability and attribution tools."""

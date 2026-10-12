@@ -1,5 +1,5 @@
 """
-Multi-market price data for CascadeNet.
+Price data for the multi-market model (S&P 500, NIFTY 50, FTSE 100, Nikkei 225).
 
 Universe: ~200 large-cap stocks across 4 markets
     - S&P 500    — top 50 by market cap (USD)

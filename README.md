@@ -9,7 +9,7 @@ It contains:
 - **Finance-sector GATv2.** A 2-layer GATv2 over 10 large US banks, with documented peer
   links and a 1-day horizon. This is the original capstone model, re-evaluated without
   look-ahead and served by a Streamlit demo.
-- **CascadeNet.** A temporal GNN over 194 stocks in 4 markets (S&P 500, NIFTY 50,
+- **Multi-market temporal GNN.** A temporal GNN over 194 stocks in 4 markets (S&P 500, NIFTY 50,
   FTSE 100, Nikkei 225). It uses 12 weekly graph snapshots, DCC-GARCH dynamic-correlation
   edges and transformer attention over time, plus a 4-step ablation.
 
@@ -38,7 +38,7 @@ pip install -r requirements.txt
 pytest                                          # 18 tests, ~1 min
 
 python -m experiments.run_static_comparison     # finance sector, ~5 min, trains the app model
-python -m experiments.run_ablation              # CascadeNet ablation, see note below
+python -m experiments.run_ablation              # multi-market ablation, see note below
 python -m experiments.generate_figures          # figures from the saved results
 
 streamlit run app.py                            # demo (needs trained_models/finance_gatv2.pth)
@@ -46,7 +46,7 @@ streamlit run app.py                            # demo (needs trained_models/fin
 
 Run every command from the repository root. The first run downloads prices from Yahoo
 Finance for a fixed window (2021-10-01 → 2026-09-29) and caches them in `data/.cache/`.
-The CascadeNet dataset (DCC-GARCH fit and graphs) is cached in `data/processed/`.
+The multi-market dataset (DCC-GARCH fit and graphs) is cached in `data/processed/`.
 
 The full ablation trains 25 models (5 configs × 5 seeds). On an 8-core laptop CPU, the
 4-market temporal model dominates the runtime, and the whole run takes a few hours. Use
@@ -66,11 +66,11 @@ y_i = 1  if  |P_i(d + h) / P_i(d) − 1| > 3%
 ```
 
 A **shock** is a daily return whose z-score exceeds 3 against the stock's trailing 60-day
-volatility (CascadeNet additionally requires |return| > 3%). At most 3 shocks are kept per
+volatility (the multi-market experiment additionally requires |return| > 3%). At most 3 shocks are kept per
 day. Events are split **by date** into 60% train, 20% validation and 20% test, with an
 *h*-day gap between splits.
 
-| | Finance sector | CascadeNet ablation |
+| | Finance sector | Multi-market ablation |
 |---|---|---|
 | Stocks | 10 US banks | 194 (50 S&P 500, 49 NIFTY, 46 FTSE, 49 Nikkei) |
 | Horizon *h* | 1 day | 5 days |
@@ -109,7 +109,7 @@ GATv2 ranks first, but all models are close to chance. The test set has only 25 
 too few to separate the models reliably. The non-graph models score *below* 0.5, so
 whatever they learned from 2022–2024 reversed in 2025–26.
 
-### CascadeNet ablation (S&P 500 targets, 5-day horizon)
+### Multi-market ablation (S&P 500 targets, 5-day horizon)
 
 > **Preliminary.** These numbers come from a short run (1 seed, 3 epochs per model), not the
 > full 5-seed protocol, which takes several hours on a laptop CPU
@@ -125,7 +125,7 @@ Test set: 392 events, 19,490 scored stock-events, base rate 0.444.
 | StaticGATv2 (Pearson graph, 1 snapshot) | 0.578 | 0.518 | 0.615 |
 | TemporalGATv2, Pearson edges | 0.597 | 0.535 | 0.616 |
 | TemporalGATv2, DCC-GARCH edges | 0.616 | 0.550 | 0.617 |
-| CascadeNet (full) | 0.614 | 0.550 | 0.615 |
+| Full model (4 markets) | 0.614 | 0.550 | 0.615 |
 
 Two patterns are already visible. Adding time (12 snapshots) recovers about 2 points over the
 static GNN, and DCC-GARCH edges add about 2 more over Pearson correlations. But no graph model
@@ -147,7 +147,7 @@ hold up:
 | shock z-scores used full-sample mean/std | used future data to define events | trailing 60-day volatility |
 | the app ran the 10-bank model on 60 stocks, with a different graph and 3-month features | outputs didn't correspond to the trained model | app uses the training feature/graph code and the 10-bank universe |
 | the app's network page added random "competitor gains"; predictions fell back to a correlation heuristic | displayed numbers weren't model output | removed |
-| the CascadeNet ablation trained on synthetic data, even in `run_real_ablation.py` | ablation numbers were meaningless (AUC ≈ 0.47) | real 4-market event dataset (`data/shock_dataset.py`) |
+| the multi-market ablation trained on synthetic data, even in `run_real_ablation.py` | ablation numbers were meaningless (AUC ≈ 0.47) | real 4-market event dataset (`data/shock_dataset.py`) |
 | paper figures fell back to hard-coded metrics and random data | figures could show numbers nobody measured | figures are built from saved results only |
 | DCC-GARCH optimizer accepted an infeasible penalty point | constant correlations | grid warm start + composite likelihood for N > 20 |
 
@@ -160,7 +160,7 @@ app.py                         Streamlit demo (finance-sector GATv2)
 data/
   multi_market.py              tickers, yfinance download/cache, USD panel on NYSE calendar
   dynamic_correlation.py       DCC-GARCH estimator (fit on train, filter forward)
-  shock_dataset.py             CascadeNet events, features, labels, Pearson/DCC graphs, splits
+  shock_dataset.py             multi-market events, features, labels, Pearson/DCC graphs, splits
   finance_universe.py          finance-sector events, 8 features, peer graph (shared with the app)
 models/
   temporal_gatv2.py            TemporalGATv2 (spatial GATv2 + temporal transformer)
@@ -168,7 +168,7 @@ models/
 experiments/
   training.py                  training loop, metrics, threshold selection
   run_static_comparison.py     finance-sector experiment
-  run_ablation.py              CascadeNet ablation
+  run_ablation.py              multi-market ablation
   generate_figures.py          figures from saved results
   results/  figures/           outputs (committed)
 analysis/attention_attribution.py   temporal / edge attention diagnostics
@@ -181,7 +181,7 @@ tests/                         pytest suite (look-ahead, splits, shapes, trainin
 
 ## Limitations
 
-- **Small, single-regime test sets.** The finance test set has 25 positives. The CascadeNet
+- **Small, single-regime test sets.** The finance test set has 25 positives. The multi-market
   test covers about 10 months. Both are one draw from one market regime, and results could
   differ in another period.
 - **The label is dominated by volatility.** "Moves more than 3%" is mostly about how volatile
@@ -191,7 +191,7 @@ tests/                         pytest suite (look-ahead, splits, shapes, trainin
   that failed to download (e.g. delisted ones) are dropped.
 - **Yahoo Finance data.** Adjusted prices can be revised, so a fresh download may not exactly
   reproduce the cached data.
-- **Hyperparameters were not tuned for CascadeNet.** They follow the design doc. A validation
+- **Hyperparameters were not tuned for the multi-market model.** They follow the design doc. A validation
   search might help, but it was out of scope.
 - **Attention is not causation.** The attention figures show what the model weighted, not
   contagion paths.

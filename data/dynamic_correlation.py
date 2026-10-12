@@ -1,5 +1,5 @@
 """
-DCC-GARCH Dynamic Correlation Estimator for CascadeNet.
+DCC-GARCH Dynamic Correlation Estimator for the multi-market model.
 
 Implements the two-step Dynamic Conditional Correlation estimator
 (Engle, 2002) to produce time-varying correlation matrices from

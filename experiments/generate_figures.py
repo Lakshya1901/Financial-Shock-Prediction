@@ -13,10 +13,10 @@ Usage (from the project root):
 
 Writes PDF + PNG to experiments/figures/:
     static_comparison     finance-sector test ROC-AUC / PR-AUC by model
-    ablation_metrics      CascadeNet ablation test ROC-AUC / PR-AUC (mean ± std)
+    ablation_metrics      multi-market ablation test ROC-AUC / PR-AUC (mean ± std)
     ablation_roc          seed-0 test ROC curves
     training_curves       validation ROC-AUC per epoch (seed 0)
-    temporal_attention    CascadeNet last-query attention over the 12 weeks, by market
+    temporal_attention    multi-market last-query attention over the 12 weeks, by market
     cross_market_attention  mean first-layer GATv2 edge attention by market pair
 """
 
@@ -93,7 +93,7 @@ def static_comparison() -> None:
 
 def ablation_metrics() -> None:
     df = pd.read_csv(_require(f"{RESULTS}/ablation_results.csv", "python -m experiments.run_ablation"))
-    _metric_bars(df, "CascadeNet ablation — S&P 500 targets, held-out test events",
+    _metric_bars(df, "Multi-market ablation — S&P 500 targets, held-out test events",
                  "ablation_metrics")
 
 
@@ -129,7 +129,7 @@ def training_curves() -> None:
 
 
 def attention_figures() -> None:
-    ckpt = torch.load(_require("trained_models/CascadeNet_Full_seed0.pth",
+    ckpt = torch.load(_require("trained_models/MultiMarket_Full_seed0.pth",
                                "python -m experiments.run_ablation"), weights_only=False)
     ds = load_or_build()
     model = TemporalGATv2(input_dim=ds.X.shape[2])
@@ -162,7 +162,7 @@ def attention_figures() -> None:
     ax.set_xticklabels([f"t-{T - 1 - k}w" if k < T - 1 else "shock\nday" for k in range(T)], fontsize=8)
     ax.grid(False)
     fig.colorbar(im, ax=ax, label="attention")
-    ax.set_title(f"CascadeNet temporal attention from the shock-day position "
+    ax.set_title(f"Multi-market model: temporal attention from the shock-day position "
                  f"(mean over {len(test)} test events)")
     _save(fig, "temporal_attention")
 

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Financial shock propagation as node classification on stock graphs: after a shock at stock *s* on day *d*, predict which other stocks move > 3% within *h* days. Two experiments share one training/eval stack:
 
 1. **Finance sector** (`data/finance_universe.py`, `experiments/run_static_comparison.py`): 10 US banks, 1-day horizon, 8 features, peer-link + shock-star graph, single snapshot. Its seed-0 GATv2 is the model served by `app.py`.
-2. **CascadeNet ablation** (`data/shock_dataset.py`, `experiments/run_ablation.py`): 194 stocks in 4 markets, 5-day horizon, 14 features, 12 weekly snapshots, Pearson vs DCC-GARCH top-k graphs, `TemporalGATv2`.
+2. **Multi-market ablation** (`data/shock_dataset.py`, `experiments/run_ablation.py`): 194 stocks in 4 markets, 5-day horizon, 14 features, 12 weekly snapshots, Pearson vs DCC-GARCH top-k graphs, `TemporalGATv2`.
 
 `ARCHITECTURE.md` explains the data flow and evaluation protocol; `docs/TEMPORAL_GATV2_DESIGN.md` covers the temporal model's math. `README.md` holds the results tables. Update the README whenever results change.
 
@@ -38,11 +38,11 @@ Run everything from the repo root (paths are CWD-relative). The local venv is `.
 ## Data and caching
 
 - `data/.cache/` holds yfinance pickles keyed by the fixed window `DATA_START`/`DATA_END` in `data/multi_market.py`.
-- `data/processed/shock_dataset.pkl` caches the built CascadeNet dataset (rebuild with `--rebuild`, which takes a few minutes).
+- `data/processed/shock_dataset.pkl` caches the built multi-market dataset (rebuild with `--rebuild`, which takes a few minutes).
 - Both cache directories are gitignored. `trained_models/` and `experiments/results|figures/` are committed.
 
 ## Layout notes
 
 - Every model returns probabilities, not logits. `experiments/training.py` applies BCE to clamped probabilities with a `pos_weight` sample weight.
 - Static models share `forward(x, edge_index, edge_attr)` (`models/baselines.py`). `TemporalGATv2.forward` takes a list of T `Data`/`Batch` objects. `experiments/training.forward_batch` dispatches between the two.
-- A dataset "item" is `{"snaps", "y", "train_mask", "eval_mask"}`. CascadeNet scores only S&P 500 nodes other than the source, for every config.
+- A dataset "item" is `{"snaps", "y", "train_mask", "eval_mask"}`. The multi-market experiment scores only S&P 500 nodes other than the source, for every config.

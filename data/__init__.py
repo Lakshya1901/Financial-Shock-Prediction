@@ -1,1 +1,1 @@
-"""CascadeNet data pipeline components."""
+"""Financial shock prediction data pipeline components."""

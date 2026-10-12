@@ -1,1 +1,1 @@
-"""CascadeNet experiment runners and figure generators."""
+"""Financial shock prediction experiment runners and figure generators."""

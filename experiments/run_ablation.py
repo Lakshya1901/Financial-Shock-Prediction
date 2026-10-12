@@ -1,5 +1,5 @@
 """
-CascadeNet ablation study on real multi-market data.
+Multi-market ablation study on real data from four markets.
 
 Each configuration adds one component on top of the previous one:
 
@@ -8,7 +8,7 @@ Each configuration adds one component on top of the previous one:
     TemporalGATv2_Static   + 12 weekly snapshots and temporal attention
                            (same Pearson graph in every snapshot)
     TemporalGATv2_DCC      + a DCC-GARCH correlation graph per snapshot
-    CascadeNet_Full        + NIFTY / FTSE / Nikkei stocks as extra nodes
+    MultiMarket_Full        + NIFTY / FTSE / Nikkei stocks as extra nodes
                            (and foreign shock sources become visible)
 
 Non-graph reference points, evaluated on the same events and nodes:
@@ -59,7 +59,7 @@ GNN_CONFIGS = [
     {"name": "StaticGATv2",          "temporal": False, "graph": "pearson", "nodes": "us"},
     {"name": "TemporalGATv2_Static", "temporal": True,  "graph": "pearson", "nodes": "us"},
     {"name": "TemporalGATv2_DCC",    "temporal": True,  "graph": "dcc",     "nodes": "us"},
-    {"name": "CascadeNet_Full",      "temporal": True,  "graph": "dcc",     "nodes": "all"},
+    {"name": "MultiMarket_Full",      "temporal": True,  "graph": "dcc",     "nodes": "all"},
 ]
 
 

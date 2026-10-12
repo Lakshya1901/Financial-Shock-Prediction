@@ -14,7 +14,7 @@ The existing model sees one graph snapshot — a single correlation/supply-chain
 - *Was there a contagion pathway that built up gradually, or did it appear suddenly?*
 - *Which market (US/India/UK/Japan) was the transmission source?*
 
-**CascadeNet's core claim:** temporal context — how the graph structure and node signals *evolve over time* — is predictive of which shocks cross-market boundaries and cascade. A temporal model can learn that gradual correlation increases precede contagion, while sudden spikes are often self-contained.
+**The multi-market model's core claim:** temporal context — how the graph structure and node signals *evolve over time* — is predictive of which shocks cross-market boundaries and cascade. A temporal model can learn that gradual correlation increases precede contagion, while sudden spikes are often self-contained.
 
 ---
 
@@ -262,7 +262,7 @@ The combination used here — DCC-GARCH correlations as GATv2 edge weights, with
 
 ---
 
-## Node Features for CascadeNet (14 features)
+## Node Features for the Multi-Market Model (14 features)
 
 Computed from USD prices on the NYSE calendar (`data/shock_dataset.py`); continuous
 features are z-scored with training-period statistics.
@@ -313,7 +313,7 @@ Ablation study will quantify the contribution of each component (Days 12–14):
 | Static GATv2 (baseline) | ✗ | ✗ | ✗ |
 | + Temporal attn | ✓ | ✗ | ✗ |
 | + DCC-GARCH edges | ✓ | ✓ | ✗ |
-| **Full CascadeNet** | ✓ | ✓ | ✓ |
+| **Full model (4 markets)** | ✓ | ✓ | ✓ |
 
 **Hypothesis (before running):** each component adds measurable ROC-AUC, with cross-market
 nodes giving the largest gain. See README → Results for what was actually measured.

@@ -1,5 +1,5 @@
 """
-Real-data shock-event dataset for CascadeNet.
+Real-data shock-event dataset for the multi-market model.
 
 Turns the USD price panel from `data.multi_market.load_usd_panel()` into
 supervised samples:

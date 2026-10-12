@@ -1,7 +1,7 @@
 """
 TemporalGATv2 — Temporal Graph Attention Network for Financial Shock Propagation.
 
-Architecture (CascadeNet Phase 1 extension):
+Architecture (multi-market extension):
 
     Stage 1 — Spatial Attention (per snapshot):
         For each of T weekly graph snapshots, run GATv2Conv to aggregate

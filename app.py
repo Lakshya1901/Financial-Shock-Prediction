@@ -93,14 +93,14 @@ and tests whether graph neural networks beat simple baselines on held-out, later
 
 1. **Finance sector** — 10 large US banks, documented peer links, 1-day horizon.
    This is the model served on the *Shock scenario* page.
-2. **CascadeNet ablation** — ~200 stocks across the S&P 500, NIFTY 50, FTSE 100 and Nikkei 225,
+2. **Multi-market ablation** — ~200 stocks across the S&P 500, NIFTY 50, FTSE 100 and Nikkei 225,
    12 weekly graph snapshots, DCC-GARCH correlation edges and a temporal-attention GNN.
 
 All numbers below are on **test events that come after the training and validation periods**,
 averaged over several random seeds.
 """)
     for title, name in [("Finance sector", "static_comparison.csv"),
-                        ("CascadeNet ablation (S&P 500 targets)", "ablation_results.csv")]:
+                        ("Multi-market ablation (S&P 500 targets)", "ablation_results.csv")]:
         df = read_csv(name)
         st.subheader(title)
         if df is None:
@@ -194,7 +194,7 @@ else:
     st.title("Results")
     for title, name, figs in [
         ("Finance sector", "static_comparison.csv", ["static_comparison"]),
-        ("CascadeNet ablation", "ablation_results.csv",
+        ("Multi-market ablation", "ablation_results.csv",
          ["ablation_metrics", "ablation_roc", "training_curves", "temporal_attention",
           "cross_market_attention"]),
     ]:
